@@ -1,0 +1,447 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Notes.json</title>
+
+  <!-- ✅ PWA additions -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b0f14">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+
+  <style>
+    :root{
+      --bg:#0b0f14; --panel:#111826; --panel2:#0f1724; --text:#e7eefc; --muted:#9bb0d1;
+      --line:#22314a; --accent:#6aa6ff; --danger:#ff5c77;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: radial-gradient(1200px 600px at 20% 0%, #14213a 0%, var(--bg) 55%);
+      color:var(--text);
+      height:100vh;
+      display:flex;
+    }
+    .app{
+      width: min(1100px, 100%);
+      margin:auto;
+      height: min(760px, 100vh);
+      border:1px solid var(--line);
+      border-radius:14px;
+      overflow:hidden;
+      background: rgba(17,24,38,0.75);
+      backdrop-filter: blur(8px);
+      display:grid;
+      grid-template-rows: auto 1fr;
+    }
+    header{
+      display:flex; gap:10px; align-items:center; justify-content:space-between;
+      padding:12px 14px; border-bottom:1px solid var(--line);
+      background: rgba(15,23,36,0.7);
+    }
+    .brand{display:flex; align-items:center; gap:10px;}
+    .dot{width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 18px rgba(106,166,255,0.7)}
+    .title{font-weight:700; letter-spacing:0.2px}
+    .sub{color:var(--muted); font-size:12px; margin-top:2px}
+    .right{display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end}
+    button{
+      border:1px solid var(--line);
+      background: rgba(17,24,38,0.65);
+      color:var(--text);
+      padding:9px 10px;
+      border-radius:10px;
+      cursor:pointer;
+      font-size:13px;
+    }
+    button:hover{border-color:#34507a}
+    button.primary{border-color: rgba(106,166,255,0.55); background: rgba(106,166,255,0.12)}
+    button.danger{border-color: rgba(255,92,119,0.6); background: rgba(255,92,119,0.10)}
+    .content{
+      display:grid;
+      grid-template-columns: 320px 1fr;
+      height:100%;
+      min-height:0;
+    }
+    .sidebar{
+      border-right:1px solid var(--line);
+      padding:12px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      min-height:0;
+    }
+    .search{
+      width:100%;
+      border:1px solid var(--line);
+      background: rgba(17,24,38,0.45);
+      color:var(--text);
+      padding:10px 10px;
+      border-radius:10px;
+      outline:none;
+      font-size:13px;
+    }
+    .list{
+      overflow:auto;
+      min-height:0;
+      padding-right:4px;
+    }
+    .noteItem{
+      padding:10px 10px;
+      border:1px solid var(--line);
+      border-radius:12px;
+      margin-bottom:10px;
+      background: rgba(17,24,38,0.35);
+      cursor:pointer;
+    }
+    .noteItem.active{border-color: rgba(106,166,255,0.65); background: rgba(106,166,255,0.08)}
+    .noteItem .t{font-weight:650; font-size:13px; line-height:1.2}
+    .noteItem .m{color:var(--muted); font-size:12px; margin-top:6px; line-height:1.25}
+    .editor{
+      padding:14px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      min-height:0;
+    }
+    .meta{display:flex; justify-content:space-between; align-items:center; gap:10px; color:var(--muted); font-size:12px}
+    .meta .pill{
+      border:1px solid var(--line);
+      padding:6px 8px;
+      border-radius:999px;
+      background: rgba(17,24,38,0.35);
+      max-width: 60%;
+      white-space: nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
+    }
+    .field{
+      width:100%;
+      border:1px solid var(--line);
+      background: rgba(17,24,38,0.45);
+      color:var(--text);
+      padding:10px 10px;
+      border-radius:10px;
+      outline:none;
+      font-size:14px;
+    }
+    textarea.field{
+      flex:1;
+      min-height:0;
+      resize:none;
+      line-height:1.45;
+      padding:12px;
+    }
+    .footerRow{
+      display:flex; gap:8px; justify-content:space-between; align-items:center; flex-wrap:wrap;
+    }
+    .hint{color:var(--muted); font-size:12px}
+    @media (max-width: 860px){
+      body{height:auto}
+      .app{height:auto; border-radius:0}
+      .content{grid-template-columns: 1fr}
+      .sidebar{border-right:0; border-bottom:1px solid var(--line)}
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="brand">
+        <div class="dot"></div>
+        <div>
+          <div class="title">Notes.json</div>
+          <div class="sub">Local-first notes. Sync by importing/exporting one JSON file.</div>
+        </div>
+      </div>
+
+      <div class="right">
+        <button class="primary" id="btnNew">+ New</button>
+        <button id="btnExport">Export JSON</button>
+        <button id="btnImport">Import JSON</button>
+        <button class="danger" id="btnDelete">Delete</button>
+        <input type="file" id="fileInput" accept="application/json" style="display:none" />
+      </div>
+    </header>
+
+    <div class="content">
+      <aside class="sidebar">
+        <input class="search" id="search" placeholder="Search notes..." />
+        <div class="list" id="list"></div>
+      </aside>
+
+      <main class="editor">
+        <div class="meta">
+          <div class="pill" id="statusPill">No note selected</div>
+          <div id="saveState">Saved</div>
+        </div>
+
+        <input class="field" id="title" placeholder="Title" disabled />
+        <textarea class="field" id="body" placeholder="Write..." disabled></textarea>
+
+        <div class="footerRow">
+          <div class="hint">Tip: export to <b>notes.json</b> inside a synced folder (OneDrive/Drive/Dropbox/Syncthing).</div>
+          <div class="hint" id="countHint"></div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const LS_KEY = "notes_json_app_v1";
+
+  const elList = document.getElementById("list");
+  const elSearch = document.getElementById("search");
+  const elTitle = document.getElementById("title");
+  const elBody = document.getElementById("body");
+  const elStatus = document.getElementById("statusPill");
+  const elSaveState = document.getElementById("saveState");
+  const elCountHint = document.getElementById("countHint");
+
+  const btnNew = document.getElementById("btnNew");
+  const btnExport = document.getElementById("btnExport");
+  const btnImport = document.getElementById("btnImport");
+  const btnDelete = document.getElementById("btnDelete");
+  const fileInput = document.getElementById("fileInput");
+
+  const nowISO = () => new Date().toISOString();
+  const uuid = () => (crypto?.randomUUID ? crypto.randomUUID() : "id_" + Math.random().toString(16).slice(2) + Date.now());
+  const clamp = (s, n) => (s.length > n ? s.slice(0, n-1) + "…" : s);
+
+  let state = loadState();
+  let activeId = state.lastActiveId || (state.notes[0]?.id ?? null);
+  let dirtyTimer = null;
+
+  function defaultState(){
+    return { version: 1, notes: [], lastActiveId: null };
+  }
+
+  function loadState(){
+    try{
+      const raw = localStorage.getItem(LS_KEY);
+      if(!raw) return defaultState();
+      const parsed = JSON.parse(raw);
+      if(!parsed || typeof parsed !== "object") return defaultState();
+      if(!Array.isArray(parsed.notes)) parsed.notes = [];
+      if(typeof parsed.version !== "number") parsed.version = 1;
+      return parsed;
+    }catch{
+      return defaultState();
+    }
+  }
+
+  function saveState(){
+    state.lastActiveId = activeId;
+    localStorage.setItem(LS_KEY, JSON.stringify(state));
+  }
+
+  function getActive(){
+    return state.notes.find(n => n.id === activeId) || null;
+  }
+
+  function sortNotes(){
+    state.notes.sort((a,b) => (b.updatedAt || "").localeCompare(a.updatedAt || ""));
+  }
+
+  function render(){
+    sortNotes();
+
+    const q = elSearch.value.trim().toLowerCase();
+    const filtered = q
+      ? state.notes.filter(n =>
+          (n.title || "").toLowerCase().includes(q) ||
+          (n.body || "").toLowerCase().includes(q)
+        )
+      : state.notes;
+
+    elList.innerHTML = "";
+    filtered.forEach(n => {
+      const div = document.createElement("div");
+      div.className = "noteItem" + (n.id === activeId ? " active" : "");
+      div.onclick = () => { switchActive(n.id); };
+
+      const t = document.createElement("div");
+      t.className = "t";
+      t.textContent = n.title?.trim() ? clamp(n.title.trim(), 60) : "(Untitled)";
+
+      const m = document.createElement("div");
+      m.className = "m";
+      const preview = (n.body || "").replace(/\s+/g," ").trim();
+      m.textContent = preview ? clamp(preview, 90) : "…";
+
+      div.appendChild(t);
+      div.appendChild(m);
+      elList.appendChild(div);
+    });
+
+    elCountHint.textContent = `${state.notes.length} note${state.notes.length === 1 ? "" : "s"}`;
+
+    const active = getActive();
+    const has = !!active;
+
+    elTitle.disabled = !has;
+    elBody.disabled = !has;
+    btnDelete.disabled = !has;
+
+    if(!has){
+      elTitle.value = "";
+      elBody.value = "";
+      elStatus.textContent = "No note selected";
+      return;
+    }
+
+    elTitle.value = active.title || "";
+    elBody.value = active.body || "";
+    elStatus.textContent = `Updated: ${formatWhen(active.updatedAt)}  |  Created: ${formatWhen(active.createdAt)}`;
+  }
+
+  function formatWhen(iso){
+    if(!iso) return "unknown";
+    const d = new Date(iso);
+    if(Number.isNaN(d.getTime())) return "unknown";
+    return d.toLocaleString();
+  }
+
+  function switchActive(id){
+    if(activeId === id) return;
+    activeId = id;
+    saveState();
+    render();
+    showSaved();
+  }
+
+  function newNote(){
+    const t = nowISO();
+    const note = { id: uuid(), title: "", body: "", createdAt: t, updatedAt: t };
+    state.notes.unshift(note);
+    activeId = note.id;
+    saveState();
+    render();
+    elTitle.focus();
+  }
+
+  function deleteNote(){
+    const active = getActive();
+    if(!active) return;
+    const ok = confirm("Delete this note?");
+    if(!ok) return;
+
+    state.notes = state.notes.filter(n => n.id !== activeId);
+    activeId = state.notes[0]?.id ?? null;
+    saveState();
+    render();
+    showSaved();
+  }
+
+  function scheduleSave(){
+    elSaveState.textContent = "Saving…";
+    if(dirtyTimer) clearTimeout(dirtyTimer);
+    dirtyTimer = setTimeout(() => {
+      const active = getActive();
+      if(!active) return;
+
+      active.title = elTitle.value;
+      active.body = elBody.value;
+      active.updatedAt = nowISO();
+
+      saveState();
+      render();
+      showSaved();
+    }, 200);
+  }
+
+  function showSaved(){
+    elSaveState.textContent = "Saved";
+  }
+
+  function exportJSON(){
+    const payload = {
+      version: 1,
+      exportedAt: nowISO(),
+      notes: state.notes
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "notes.json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function mergeImport(incomingNotes){
+    const byId = new Map(state.notes.map(n => [n.id, n]));
+    for(const n of incomingNotes){
+      if(!n || typeof n !== "object" || !n.id) continue;
+      const existing = byId.get(n.id);
+      if(!existing){
+        byId.set(n.id, n);
+      }else{
+        const a = existing.updatedAt || "";
+        const b = n.updatedAt || "";
+        if(b > a) byId.set(n.id, n);
+      }
+    }
+    state.notes = Array.from(byId.values());
+    if(!activeId && state.notes[0]) activeId = state.notes[0].id;
+  }
+
+  function importJSONFile(file){
+    const reader = new FileReader();
+    reader.onload = () => {
+      try{
+        const data = JSON.parse(String(reader.result || ""));
+        const notes = Array.isArray(data?.notes) ? data.notes : (Array.isArray(data) ? data : []);
+        mergeImport(notes);
+        saveState();
+        render();
+        alert("Import complete (merged).");
+      }catch{
+        alert("Could not import. Invalid JSON.");
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  // Events
+  btnNew.addEventListener("click", newNote);
+  btnDelete.addEventListener("click", deleteNote);
+  btnExport.addEventListener("click", exportJSON);
+  btnImport.addEventListener("click", () => fileInput.click());
+  fileInput.addEventListener("change", (e) => {
+    const file = e.target.files?.[0];
+    if(file) importJSONFile(file);
+    fileInput.value = "";
+  });
+
+  elSearch.addEventListener("input", render);
+  elTitle.addEventListener("input", scheduleSave);
+  elBody.addEventListener("input", scheduleSave);
+
+  // First paint
+  render();
+
+  // Create a first note automatically if empty
+  if(state.notes.length === 0){
+    newNote();
+  }
+})();
+</script>
+
+<!-- ✅ PWA addition: service worker registration -->
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./sw.js").catch(console.warn);
+    });
+  }
+</script>
+
+</body>
+</html>
